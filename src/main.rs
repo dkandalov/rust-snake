@@ -5,13 +5,14 @@ use rand::ChaChaRng;
 use rand::SeedableRng;
 use std::ffi::{CString};
 use rand::rngs::EntropyRng;
+use self::Direction::{Up, Down, Left, Right};
 
 fn main() {
     unsafe {
         initscr();
         noecho();
         curs_set(0);
-        halfdelay(3);
+        halfdelay(2);
 
         let width = 20;
         let height = 10;
@@ -19,8 +20,8 @@ fn main() {
             width,
             height,
             snake: Snake::new(
-                vec![Cell { x: 4, y: 0 }, Cell { x: 3, y: 0 }, Cell { x: 2, y: 0 }, Cell { x: 1, y: 0 }, Cell { x: 0, y: 0 }],
-                Direction::Right
+                vec![cell(4, 0), cell(3, 0), cell(2, 0), cell(1, 0), cell(0, 0)],
+                Right
             ),
             apples: Apples::create(width, height)
         };
@@ -33,10 +34,10 @@ fn main() {
 
             c = wgetch(window);
             let direction = match char::from(c as u8) {
-                'i' => Some(Direction::Up),
-                'j' => Some(Direction::Left),
-                'k' => Some(Direction::Down),
-                'l' => Some(Direction::Right),
+                'i' => Some(Up),
+                'j' => Some(Left),
+                'k' => Some(Down),
+                'l' => Some(Right),
                 _ => Option::None
             };
 
@@ -143,29 +144,33 @@ impl Snake {
     }
 
     fn slide(&self) -> Snake {
-        // TODO cleanup
-        let mut vec: Vec<Cell> = vec![self.cells.first().unwrap().move_in(&self.direction)];
-
         let mut new_cells = self.cells.clone();
+
+        let new_head = new_cells.first().unwrap().move_in(&self.direction);
+        new_cells.insert(0, new_head);
+
         if self.eaten_apples == 0 {
             new_cells.pop();
         }
-        vec.append(&mut new_cells);
 
-        Snake { cells: vec, direction: self.direction, eaten_apples: std::cmp::max(0, self.eaten_apples - 1) }
+        Snake {
+            cells: new_cells,
+            direction: self.direction,
+            eaten_apples: std::cmp::max(0, self.eaten_apples - 1)
+        }
     }
 
     fn eat(&self, apples: Apples) -> (Snake, Apples) {
         if apples.cells.contains(self.head()) {
-            let mut new_apple_cells = apples.cells.clone();
-            new_apple_cells.retain(|it| it != self.head());
-            let new_apples = apples.with_cells(new_apple_cells);
-
             let new_snake = Snake {
                 cells: self.cells.clone(),
                 direction: self.direction,
                 eaten_apples: self.eaten_apples + 1
             };
+
+            let mut new_apple_cells = apples.cells.clone();
+            new_apple_cells.retain(|it| it != self.head());
+            let new_apples = apples.with_cells(new_apple_cells);
 
             (new_snake, new_apples)
         } else {
@@ -220,19 +225,23 @@ struct Cell {
     y: i16,
 }
 
+fn cell(x: i16, y: i16) -> Cell {
+    return Cell { x, y };
+}
+
 impl Cell {
     fn move_in(&self, direction: &Direction) -> Cell {
         let dx = match direction {
-            Direction::Up => 0,
-            Direction::Down => 0,
-            Direction::Left => -1,
-            Direction::Right => 1,
+            Up => 0,
+            Down => 0,
+            Left => -1,
+            Right => 1,
         };
         let dy = match direction {
-            Direction::Up => -1,
-            Direction::Down => 1,
-            Direction::Left => 0,
-            Direction::Right => 0,
+            Up => -1,
+            Down => 1,
+            Left => 0,
+            Right => 0,
         };
         return Cell { x: self.x + dx, y: self.y + dy };
     }
@@ -247,10 +256,10 @@ enum Direction {
 }
 
 fn are_opposite(d1: Direction, d2: Direction) -> bool {
-    if d1 == Direction::Up && d2 == Direction::Down { return true; }
-    if d2 == Direction::Up && d1 == Direction::Down { return true; }
-    if d1 == Direction::Left && d2 == Direction::Right { return true; }
-    if d2 == Direction::Left && d1 == Direction::Right { return true; }
+    if d1 == Up && d2 == Down { return true; }
+    if d2 == Up && d1 == Down { return true; }
+    if d1 == Left && d2 == Right { return true; }
+    if d2 == Left && d1 == Right { return true; }
     false
 }
 
@@ -291,52 +300,50 @@ extern "C" {
 mod snake_tests {
     use super::*;
 
+    fn new_snake() -> Snake {
+        return Snake::new(
+            vec![cell(2, 0), cell(1, 0), cell(0, 0)],
+            Right,
+        );
+    }
+
     #[test]
     fn snake_moves_right() {
-        let snake = Snake::new(
-            vec![Cell { x: 2, y: 0 }, Cell { x: 1, y: 0 }, Cell { x: 0, y: 0 }],
-            Direction::Right,
-        );
+        let snake = new_snake();
 
         assert_eq!(
             snake.slide(),
             Snake::new(
-                vec![Cell { x: 3, y: 0 }, Cell { x: 2, y: 0 }, Cell { x: 1, y: 0 }],
-                Direction::Right,
+                vec![cell(3, 0), cell(2, 0), cell(1, 0)],
+                Right,
             )
         )
     }
 
     #[test]
     fn snake_can_change_direction() {
-        let snake = Snake::new(
-            vec![Cell { x: 2, y: 0 }, Cell { x: 1, y: 0 }, Cell { x: 0, y: 0 }],
-            Direction::Right,
-        );
+        let snake = new_snake();
 
         assert_eq!(
-            snake.turn_in(Direction::Down).slide(),
+            snake.turn_in(Down).slide(),
             Snake::new(
-                vec![Cell { x: 2, y: 1 }, Cell { x: 2, y: 0 }, Cell { x: 1, y: 0 }],
-                Direction::Down
+                vec![cell(2, 1), cell(2, 0), cell(1, 0)],
+                Down
             )
         );
         assert_eq!(
-            snake.turn_in(Direction::Left).slide(),
+            snake.turn_in(Left).slide(),
             Snake::new(
-                vec![Cell { x: 3, y: 0 }, Cell { x: 2, y: 0 }, Cell { x: 1, y: 0 }],
-                Direction::Right
+                vec![cell(3, 0), cell(2, 0), cell(1, 0)],
+                Right
             )
         );
     }
 
     #[test]
     fn snake_eats_an_apple() {
-        let snake = Snake::new(
-            vec![Cell { x: 2, y: 0 }, Cell { x: 1, y: 0 }, Cell { x: 0, y: 0 }],
-            Direction::Right
-        );
-        let apples = Apples::create(10, 10).with_cells(vec![Cell { x: 2, y: 0 }]);
+        let snake = new_snake();
+        let apples = Apples::create(10, 10).with_cells(vec![cell(2, 0)]);
 
         let (new_snake, new_apples) = snake.eat(apples);
         assert_eq!(new_apples.cells, vec![]);
@@ -344,8 +351,8 @@ mod snake_tests {
         assert_eq!(
             new_snake.slide(),
             Snake {
-                cells: vec![Cell { x: 3, y: 0 }, Cell { x: 2, y: 0 }, Cell { x: 1, y: 0 }, Cell { x: 0, y: 0 }],
-                direction: Direction::Right,
+                cells: vec![cell(3, 0), cell(2, 0), cell(1, 0), cell(0, 0)],
+                direction: Right,
                 eaten_apples: 0
             }
         );
@@ -359,21 +366,21 @@ mod game_tests {
     #[test]
     fn game_is_over_when_snake_hits_border() {
         let snake = Snake::new(
-            vec![Cell { x: 2, y: 0 }, Cell { x: 1, y: 0 }, Cell { x: 0, y: 0 }],
-            Direction::Right
+            vec![cell(2, 0), cell(1, 0), cell(0, 0)],
+            Right
         );
         let game = Game { snake, width: 3, height: 1, apples: Apples::create(3, 1) };
 
         assert_eq!(game.is_over(), false);
         assert_eq!(game.update(None).is_over(), true);
-        assert_eq!(game.update(Some(Direction::Down)).is_over(), true);
+        assert_eq!(game.update(Some(Down)).is_over(), true);
     }
 
     #[test]
     fn game_is_over_when_snake_bites_itself() {
         let snake = Snake::new(
-            vec![Cell { x: 0, y: 0 }, Cell { x: 0, y: 1 }, Cell { x: 1, y: 1 }, Cell { x: 1, y: 0 }, Cell { x: 0, y: 0 }],
-            Direction::Right
+            vec![cell(0, 0), cell(0, 1), cell(1, 1), cell(1, 0), cell(0, 0)],
+            Right
         );
         let game = Game { snake, width: 100, height: 100, apples: Apples::create(3, 1) };
 
@@ -402,7 +409,7 @@ mod apples_tests {
 
         assert_eq!(
             apples.grow().grow().grow().cells,
-            vec![Cell { x: 7, y: 0 }]
+            vec![cell(7, 0)]
         );
     }
 }
