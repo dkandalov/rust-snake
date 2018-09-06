@@ -96,21 +96,16 @@ impl Game {
             return self.clone();
         }
 
-        let new_snake;
-        if direction.is_some() {
-            new_snake = self.snake.turn_in(direction.unwrap()).slide();
-        } else {
-            new_snake = self.snake.slide();
-        }
-        let new_apples = self.apples.clone().grow().clone(); // TODO
-
-        let (new_snake2, new_apples2) = new_snake.eat(new_apples);
+        let (new_snake, new_apples) = self.snake
+            .turn(direction)
+            .slide()
+            .eat(self.apples.clone().grow().clone()); // TODO
 
         return Game {
             width: self.width,
             height: self.height,
-            snake: new_snake2,
-            apples: new_apples2
+            snake: new_snake,
+            apples: new_apples
         };
     }
 }
@@ -135,11 +130,11 @@ impl Snake {
         self.cells[1..self.cells.len()].to_owned()
     }
 
-    fn turn_in(&self, new_direction: Direction) -> Snake {
-        if are_opposite(new_direction, self.direction) {
+    fn turn(&self, new_direction: Option<Direction>) -> Snake {
+        if new_direction.is_none() || are_opposite(new_direction.unwrap(), self.direction) {
             self.clone()
         } else {
-            Snake { cells: self.cells.clone(), direction: new_direction, eaten_apples: self.eaten_apples }
+            Snake { cells: self.cells.clone(), direction: new_direction.unwrap(), eaten_apples: self.eaten_apples }
         }
     }
 
@@ -161,7 +156,9 @@ impl Snake {
     }
 
     fn eat(&self, apples: Apples) -> (Snake, Apples) {
-        if apples.cells.contains(self.head()) {
+        if !apples.cells.contains(self.head()) {
+            (self.clone(), apples.clone())
+        } else {
             let new_snake = Snake {
                 cells: self.cells.clone(),
                 direction: self.direction,
@@ -173,8 +170,6 @@ impl Snake {
             let new_apples = apples.with_cells(new_apple_cells);
 
             (new_snake, new_apples)
-        } else {
-            (self.clone(), apples.clone())
         }
     }
 }
@@ -325,14 +320,14 @@ mod snake_tests {
         let snake = new_snake();
 
         assert_eq!(
-            snake.turn_in(Down).slide(),
+            snake.turn(Some(Down)).slide(),
             Snake::new(
                 vec![cell(2, 1), cell(2, 0), cell(1, 0)],
                 Down
             )
         );
         assert_eq!(
-            snake.turn_in(Left).slide(),
+            snake.turn(Some(Left)).slide(),
             Snake::new(
                 vec![cell(3, 0), cell(2, 0), cell(1, 0)],
                 Right
