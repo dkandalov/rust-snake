@@ -1,10 +1,12 @@
 extern crate libc;
 extern crate rand;
+#[macro_use] extern crate maplit;
 use rand::Rng;
 use rand::ChaChaRng;
 use rand::SeedableRng;
 use std::ffi::{CString};
 use rand::rngs::EntropyRng;
+use std::collections::HashSet;
 use self::Direction::{Up, Down, Left, Right};
 
 fn main() {
@@ -99,7 +101,7 @@ impl Game {
         let (new_snake, new_apples) = self.snake
             .turn(direction)
             .slide()
-            .eat(self.apples.clone().grow().clone()); // TODO
+            .eat(self.apples.to_owned().grow().to_owned()); // to_owned() twice :(
 
         return Game {
             width: self.width,
@@ -178,7 +180,7 @@ impl Snake {
 struct Apples {
     field_width: i16,
     field_height: i16,
-    cells: Vec<Cell>,
+    cells: HashSet<Cell>,
     growth_speed: i16,
     rng: ChaChaRng
 }
@@ -188,14 +190,14 @@ impl Apples {
         let apples = Apples {
             field_width,
             field_height,
-            cells: vec![],
+            cells: hashset![],
             growth_speed: 3,
             rng: ChaChaRng::from_rng(EntropyRng::new()).unwrap()
         };
         return apples;
     }
 
-    fn with_cells(self, cells: Vec<Cell>) -> Apples {
+    fn with_cells(self, cells: HashSet<Cell>) -> Apples {
         Apples { cells: cells, ..self }
     }
 
@@ -208,13 +210,13 @@ impl Apples {
             x: self.rng.gen_range(0, self.field_width),
             y: self.rng.gen_range(0, self.field_height)
         };
-        self.cells.push(cell);
+        self.cells.insert(cell);
 
         return self;
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Hash, Eq)]
 struct Cell {
     x: i16,
     y: i16,
@@ -338,10 +340,10 @@ mod snake_tests {
     #[test]
     fn snake_eats_an_apple() {
         let snake = new_snake();
-        let apples = Apples::create(10, 10).with_cells(vec![cell(2, 0)]);
+        let apples = Apples::create(10, 10).with_cells(hashset![cell(2, 0)]);
 
         let (new_snake, new_apples) = snake.eat(apples);
-        assert_eq!(new_apples.cells, vec![]);
+        assert_eq!(new_apples.cells, hashset![]);
         assert_eq!(new_snake.eaten_apples, 1);
         assert_eq!(
             new_snake.slide(),
@@ -397,14 +399,14 @@ mod apples_tests {
         let mut apples = Apples {
             field_width: 20,
             field_height: 10,
-            cells: vec![],
+            cells: hashset![],
             growth_speed: 3,
             rng
         };
 
         assert_eq!(
             apples.grow().grow().grow().cells,
-            vec![cell(7, 0)]
+            hashset![cell(7, 0)]
         );
     }
 }
