@@ -1,6 +1,7 @@
 ### What is this?
 This is a minimal [snake game](https://en.wikipedia.org/wiki/Snake_(video_game_genre)) 
-with [ncurses UI](https://en.wikipedia.org/wiki/Ncurses) written in Rust.
+with [ncurses](https://en.wikipedia.org/wiki/Ncurses) UI 
+written in [Rust](https://www.rust-lang.org).
 It is an attempt to re-implement [Kotlin/Native snake](https://github.com/dkandalov/kotlin-native-snake),
 therefore, some design decisions might not be idiomatic. 
 
