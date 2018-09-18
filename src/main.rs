@@ -66,7 +66,7 @@ impl Game {
             mvwprintw(window, self.snake.head().y + 1, self.snake.head().x + 1, "Q".to_c_str().as_ptr());
 
             if self.is_over() {
-                mvwprintw(window, 0, 4, "Game is Over".to_c_str().as_ptr());
+                mvwprintw(window, 0, 6, "Game Over".to_c_str().as_ptr());
                 mvwprintw(window, 1, 3, format!("Your score is {}", self.score()).as_str().to_c_str().as_ptr());
             }
 
