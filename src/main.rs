@@ -29,13 +29,13 @@ fn main() {
         };
         let window = newwin(game.height + 2, game.width + 2, 0, 0);
 
-        let mut c = 0;
-        while char::from(c as u8) != 'q' {
+        let mut input = 0;
+        while char::from(input as u8) != 'q' {
 
             game.draw(window);
 
-            c = wgetch(window);
-            let direction = match char::from(c as u8) {
+            input = wgetch(window);
+            let direction = match char::from(input as u8) {
                 'i' => Some(Up),
                 'j' => Some(Left),
                 'k' => Some(Down),
