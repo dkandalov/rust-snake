@@ -202,8 +202,8 @@ impl Apples {
     }
 
     fn grow(&mut self) -> &mut Apples {
-        let n = self.rng.gen_range(0, self.growth_speed);
-        if n != 0 {
+        let n = self.rng.gen_range(0, 10);
+        if n >= self.growth_speed {
             return self
         }
         let cell = Cell {
