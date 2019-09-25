@@ -1,10 +1,12 @@
 extern crate libc;
 extern crate rand;
-#[macro_use] extern crate maplit;
+#[macro_use]
+extern crate maplit;
+
 use rand::Rng;
 use rand::ChaChaRng;
 use rand::SeedableRng;
-use std::ffi::{CString};
+use std::ffi::CString;
 use rand::rngs::EntropyRng;
 use std::collections::HashSet;
 use self::Direction::{Up, Down, Left, Right};
@@ -23,15 +25,14 @@ fn main() {
             height,
             snake: Snake::new(
                 vec![cell(4, 0), cell(3, 0), cell(2, 0), cell(1, 0), cell(0, 0)],
-                Right
+                Right,
             ),
-            apples: Apples::create(width, height)
+            apples: Apples::create(width, height),
         };
         let window = newwin(game.height + 2, game.width + 2, 0, 0);
 
         let mut input = 0;
         while char::from(input as u8) != 'q' {
-
             game.draw(window);
 
             input = wgetch(window);
@@ -80,13 +81,15 @@ struct Game {
     width: i16,
     height: i16,
     snake: Snake,
-    apples: Apples
+    apples: Apples,
 }
 
 impl Game {
     fn is_over(&self) -> bool {
-        self.snake.cells.iter().any(|&it| it.x < 0 || it.x >= self.width || it.y < 0 || it.y >= self.height) ||
-        self.snake.tail().contains(self.snake.head())
+        self.snake.tail().contains(self.snake.head()) ||
+            self.snake.cells.iter().any(|&it|
+                it.x < 0 || it.x >= self.width || it.y < 0 || it.y >= self.height
+            )
     }
 
     fn score(&self) -> u8 {
@@ -107,7 +110,7 @@ impl Game {
             width: self.width,
             height: self.height,
             snake: new_snake,
-            apples: new_apples
+            apples: new_apples,
         };
     }
 }
@@ -116,7 +119,7 @@ impl Game {
 struct Snake {
     cells: Vec<Cell>,
     direction: Direction,
-    eaten_apples: i16
+    eaten_apples: i16,
 }
 
 impl Snake {
@@ -153,7 +156,7 @@ impl Snake {
         Snake {
             cells: new_cells,
             direction: self.direction,
-            eaten_apples: std::cmp::max(0, self.eaten_apples - 1)
+            eaten_apples: std::cmp::max(0, self.eaten_apples - 1),
         }
     }
 
@@ -164,7 +167,7 @@ impl Snake {
             let new_snake = Snake {
                 cells: self.cells.clone(),
                 direction: self.direction,
-                eaten_apples: self.eaten_apples + 1
+                eaten_apples: self.eaten_apples + 1,
             };
 
             let mut new_apple_cells = apples.cells.clone();
@@ -182,7 +185,7 @@ struct Apples {
     field_height: i16,
     cells: HashSet<Cell>,
     growth_speed: i16,
-    rng: ChaChaRng
+    rng: ChaChaRng,
 }
 
 impl Apples {
@@ -192,23 +195,23 @@ impl Apples {
             field_height,
             cells: hashset![],
             growth_speed: 3,
-            rng: ChaChaRng::from_rng(EntropyRng::new()).unwrap()
+            rng: ChaChaRng::from_rng(EntropyRng::new()).unwrap(),
         };
         return apples;
     }
 
     fn with_cells(self, cells: HashSet<Cell>) -> Apples {
-        Apples { cells: cells, ..self }
+        Apples { cells, ..self }
     }
 
     fn grow(&mut self) -> &mut Apples {
         let n = self.rng.gen_range(0, 10);
         if n >= self.growth_speed {
-            return self
+            return self;
         }
         let cell = Cell {
             x: self.rng.gen_range(0, self.field_width),
-            y: self.rng.gen_range(0, self.field_height)
+            y: self.rng.gen_range(0, self.field_height),
         };
         self.cells.insert(cell);
 
@@ -325,14 +328,14 @@ mod snake_tests {
             snake.turn(Some(Down)).slide(),
             Snake::new(
                 vec![cell(2, 1), cell(2, 0), cell(1, 0)],
-                Down
+                Down,
             )
         );
         assert_eq!(
             snake.turn(Some(Left)).slide(),
             Snake::new(
                 vec![cell(3, 0), cell(2, 0), cell(1, 0)],
-                Right
+                Right,
             )
         );
     }
@@ -350,7 +353,7 @@ mod snake_tests {
             Snake {
                 cells: vec![cell(3, 0), cell(2, 0), cell(1, 0), cell(0, 0)],
                 direction: Right,
-                eaten_apples: 0
+                eaten_apples: 0,
             }
         );
     }
@@ -364,7 +367,7 @@ mod game_tests {
     fn game_is_over_when_snake_hits_border() {
         let snake = Snake::new(
             vec![cell(2, 0), cell(1, 0), cell(0, 0)],
-            Right
+            Right,
         );
         let game = Game { snake, width: 3, height: 1, apples: Apples::create(3, 1) };
 
@@ -377,7 +380,7 @@ mod game_tests {
     fn game_is_over_when_snake_bites_itself() {
         let snake = Snake::new(
             vec![cell(0, 0), cell(0, 1), cell(1, 1), cell(1, 0), cell(0, 0)],
-            Right
+            Right,
         );
         let game = Game { snake, width: 100, height: 100, apples: Apples::create(3, 1) };
 
@@ -401,7 +404,7 @@ mod apples_tests {
             field_height: 10,
             cells: hashset![],
             growth_speed: 3,
-            rng
+            rng,
         };
 
         assert_eq!(
